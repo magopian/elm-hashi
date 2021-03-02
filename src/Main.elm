@@ -14,16 +14,22 @@ type alias Point =
 
 
 type alias Model =
-    List Point
+    { circles : List Point
+    , selectedCircle : Maybe Point
+    }
 
 
 initialModel : Model
 initialModel =
-    [ Point 0 0
-    , Point 0 2
-    , Point -1 4
-    , Point 2 4
-    ]
+    { circles =
+        [ Point 0 0
+        , Point 0 2
+        , Point -1 4
+        , Point 2 4
+        ]
+    , selectedCircle = Nothing
+    }
+
 
 main =
     game view update initialModel
@@ -33,7 +39,7 @@ main =
 ---- UPDATE ----
 
 
-update: (Computer -> Model -> Model)
+update : Computer -> Model -> Model
 update computer model =
     let
         screenSize =
@@ -43,15 +49,34 @@ update computer model =
             computer.mouse.x
                 |> screen_to_game computer.screen
                 |> Debug.log "mouse"
+
+        mouseX =
+            computer.mouse.x
+                |> screen_to_game computer.screen
+
+        mouseY =
+            computer.mouse.y
+                |> screen_to_game computer.screen
+
+        mousePoint =
+            Point mouseX mouseY
     in
-    model
+    if computer.mouse.click then
+        if List.member mousePoint model.circles then
+            { model | selectedCircle = Just mousePoint }
+
+        else
+            { model | selectedCircle = Nothing }
+
+    else
+        model
 
 
 
 ---- VIEW ----
 
 
-view: Computer -> Model -> List Shape
+view : Computer -> Model -> List Shape
 view computer model =
     let
         screenSize =
@@ -64,21 +89,37 @@ view computer model =
 
 viewGame : Model -> List Shape
 viewGame model =
+    let
+        isCircleSelected : Point -> Bool
+        isCircleSelected point =
+            model.selectedCircle
+                |> Maybe.map (\selected -> selected == point)
+                |> Maybe.withDefault False
+    in
     [ group
-        (model
+        (model.circles
             |> List.map
                 (\point ->
-                    viewCircle
+                    viewCircle (isCircleSelected point)
                         |> move point.x point.y
                 )
         )
     ]
 
 
-viewCircle =
+viewCircle : Bool -> Shape
+viewCircle selected =
+    let
+        color =
+            if selected then
+                yellow
+
+            else
+                white
+    in
     group
         [ circle blue 0.5
-        , circle white 0.4
+        , circle color 0.4
         ]
 
 
@@ -86,6 +127,7 @@ viewCircle =
 ---- HELPERS ----
 
 
+screen_to_game : Screen -> Number -> Number
 screen_to_game screen coord =
     let
         screenSize =
@@ -94,8 +136,10 @@ screen_to_game screen coord =
     coord
         * (gameSize / screenSize)
         |> round
+        |> toFloat
 
 
+game_to_screen : Screen -> Number
 game_to_screen screen =
     let
         screenSize =
