@@ -3,7 +3,7 @@ module Main exposing (main)
 import Playground exposing (..)
 
 
-gamewidth =
+gameSize =
     10
 
 
@@ -21,8 +21,25 @@ main =
     game view update initModel
 
 
+
+---- UPDATE ----
+
+
 update computer model =
+    let
+        screenSize =
+            min computer.screen.width computer.screen.height
+
+        _ =
+            computer.mouse.x
+                |> screen_to_game computer.screen
+                |> Debug.log "mouse"
+    in
     model
+
+
+
+---- VIEW ----
 
 
 view computer model =
@@ -31,7 +48,7 @@ view computer model =
             min computer.screen.width computer.screen.height
     in
     [ group (viewGame model)
-        |> scale (screenSize / gamewidth)
+        |> scale (game_to_screen computer.screen)
     ]
 
 
@@ -50,3 +67,25 @@ viewCircle =
         [ circle blue 0.5
         , circle white 0.4
         ]
+
+
+
+---- HELPERS ----
+
+
+screen_to_game screen coord =
+    let
+        screenSize =
+            min screen.width screen.height
+    in
+    coord
+        * (gameSize / screenSize)
+        |> round
+
+
+game_to_screen screen =
+    let
+        screenSize =
+            min screen.width screen.height
+    in
+    screenSize / gameSize
