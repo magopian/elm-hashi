@@ -7,24 +7,33 @@ gameSize =
     10
 
 
-type alias Model =
-    { x : Int
-    , y : Int
+type alias Point =
+    { x : Number
+    , y : Number
     }
 
 
-initModel =
-    { x = 0, y = 0 }
+type alias Model =
+    List Point
 
+
+initialModel : Model
+initialModel =
+    [ Point 0 0
+    , Point 0 2
+    , Point -1 4
+    , Point 2 4
+    ]
 
 main =
-    game view update initModel
+    game view update initialModel
 
 
 
 ---- UPDATE ----
 
 
+update: (Computer -> Model -> Model)
 update computer model =
     let
         screenSize =
@@ -42,6 +51,7 @@ update computer model =
 ---- VIEW ----
 
 
+view: Computer -> Model -> List Shape
 view computer model =
     let
         screenSize =
@@ -52,13 +62,16 @@ view computer model =
     ]
 
 
-viewGame { x, y } =
+viewGame : Model -> List Shape
+viewGame model =
     [ group
-        [ viewCircle |> move 0 0
-        , viewCircle |> move 0 2
-        , viewCircle |> move -1 4
-        , viewCircle |> move 2 4
-        ]
+        (model
+            |> List.map
+                (\point ->
+                    viewCircle
+                        |> move point.x point.y
+                )
+        )
     ]
 
 
