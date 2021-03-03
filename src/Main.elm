@@ -14,9 +14,15 @@ type alias Point =
     }
 
 
+type Selected
+    = None
+    | One Point
+    | Two Point Point
+
+
 type alias Model =
     { circles : List Point
-    , selectedCircle : Maybe Point
+    , selectedCircle : Selected
     }
 
 
@@ -28,7 +34,7 @@ initialModel =
         , Point -1 4
         , Point 2 4
         ]
-    , selectedCircle = Nothing
+    , selectedCircle = None
     }
 
 
@@ -61,10 +67,29 @@ update computer model =
     in
     if computer.mouse.click then
         if List.member mousePoint model.circles then
-            { model | selectedCircle = Just mousePoint }
+            case model.selectedCircle of
+                None ->
+                    { model | selectedCircle = One mousePoint }
+
+                One firstSelected ->
+                    if firstSelected == mousePoint then
+                        { model | selectedCircle = None }
+
+                    else
+                        { model | selectedCircle = Two firstSelected mousePoint }
+
+                Two firstSelected secondSelected ->
+                    if firstSelected == mousePoint then
+                        { model | selectedCircle = One secondSelected }
+
+                    else if secondSelected == mousePoint then
+                        { model | selectedCircle = One firstSelected }
+
+                    else
+                        { model | selectedCircle = One mousePoint }
 
         else
-            { model | selectedCircle = Nothing }
+            { model | selectedCircle = None }
 
     else
         model
@@ -86,9 +111,15 @@ viewGame model =
     let
         isCircleSelected : Point -> Bool
         isCircleSelected point =
-            model.selectedCircle
-                |> Maybe.map (\selected -> selected == point)
-                |> Maybe.withDefault False
+            case model.selectedCircle of
+                None ->
+                    False
+
+                One firstSelected ->
+                    firstSelected == point
+
+                Two firstSelected secondSelected ->
+                    firstSelected == point || secondSelected == point
     in
     [ group
         (model.circles
