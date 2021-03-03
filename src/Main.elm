@@ -73,19 +73,28 @@ update computer model =
 
                 One firstSelected ->
                     if firstSelected == mousePoint then
+                        -- Deselect the first circle if it's clicked again
                         { model | selectedCircle = None }
 
-                    else
+                    else if can_connect firstSelected mousePoint then
+                        -- If the second circle can be connected, add it to the selection ...
                         { model | selectedCircle = Two firstSelected mousePoint }
+
+                    else
+                        -- ... or make the second circle the new first circle
+                        { model | selectedCircle = One mousePoint }
 
                 Two firstSelected secondSelected ->
                     if firstSelected == mousePoint then
+                        -- Deselect the first circle if it's clicked again and make the second one the first selected
                         { model | selectedCircle = One secondSelected }
 
                     else if secondSelected == mousePoint then
+                        -- Deselect the second circle if it's clicked again
                         { model | selectedCircle = One firstSelected }
 
                     else
+                        -- Start a new selection
                         { model | selectedCircle = One mousePoint }
 
         else
@@ -171,3 +180,8 @@ game_to_screen screen =
             min screen.width screen.height
     in
     screenSize / gameSize
+
+
+can_connect : Point -> Point -> Bool
+can_connect first second =
+    first.x == second.x || first.y == second.y
