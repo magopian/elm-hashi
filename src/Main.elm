@@ -3,6 +3,7 @@ module Main exposing (main)
 import Playground exposing (..)
 
 
+gameSize : Number
 gameSize =
     10
 
@@ -42,9 +43,6 @@ main =
 update : Computer -> Model -> Model
 update computer model =
     let
-        screenSize =
-            min computer.screen.width computer.screen.height
-
         _ =
             computer.mouse.x
                 |> screen_to_game computer.screen
@@ -78,10 +76,6 @@ update computer model =
 
 view : Computer -> Model -> List Shape
 view computer model =
-    let
-        screenSize =
-            min computer.screen.width computer.screen.height
-    in
     [ group (viewGame model)
         |> scale (game_to_screen computer.screen)
     ]
