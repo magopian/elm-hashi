@@ -43,7 +43,6 @@ initialModel =
     , selectedCircle = None
     , connections =
         [ Double (Point 0 2) (Point 0 0)
-        , Single (Point -1 4) (Point 2 4)
         ]
     }
 
@@ -88,7 +87,10 @@ update computer model =
 
                     else if can_connect firstSelected mousePoint then
                         -- If the second circle can be connected, add it to the selection ...
-                        { model | selectedCircle = Two firstSelected mousePoint }
+                        { model
+                            | selectedCircle = Two firstSelected mousePoint
+                            , connections = model.connections ++ [ Single firstSelected mousePoint ]
+                        }
 
                     else
                         -- ... or make the second circle the new first circle
