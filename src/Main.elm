@@ -41,9 +41,7 @@ initialModel =
         , Point 2 4
         ]
     , selectedCircle = None
-    , connections =
-        [ Double (Point 0 2) (Point 0 0)
-        ]
+    , connections = []
     }
 
 
@@ -89,7 +87,7 @@ update computer model =
                         -- If the second circle can be connected, add it to the selection ...
                         { model
                             | selectedCircle = Two firstSelected mousePoint
-                            , connections = model.connections ++ [ Single firstSelected mousePoint ]
+                            , connections = manageConnections model.connections firstSelected mousePoint
                         }
 
                     else
@@ -239,3 +237,36 @@ game_to_screen screen =
 can_connect : Point -> Point -> Bool
 can_connect first second =
     first.x == second.x || first.y == second.y
+
+
+manageConnections : List Connection -> Point -> Point -> List Connection
+manageConnections connections a b =
+    let
+        -- Always order the points in the connection the same way so we can compare the connections
+        ( first, second ) =
+            if a.x < b.x || a.y < b.y then
+                ( a, b )
+
+            else
+                ( b, a )
+
+        single =
+            Single first second
+
+        double =
+            Double first second
+    in
+    if List.member single connections then
+        removeConnection connections single ++ [ double ]
+
+    else if List.member double connections then
+        removeConnection connections double
+
+    else
+        connections ++ [ single ]
+
+
+removeConnection : List Connection -> Connection -> List Connection
+removeConnection connections connection =
+    connections
+        |> List.filter (\conn -> conn /= connection)
