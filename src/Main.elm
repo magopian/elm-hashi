@@ -14,15 +14,21 @@ type alias Point =
     }
 
 
-type Selected
+type Selection
     = None
     | One Point
     | Two Point Point
 
 
+type Connection
+    = Single Point Point
+    | Double Point Point
+
+
 type alias Model =
     { circles : List Point
-    , selectedCircle : Selected
+    , selectedCircle : Selection
+    , connections : List Connection
     }
 
 
@@ -35,6 +41,10 @@ initialModel =
         , Point 2 4
         ]
     , selectedCircle = None
+    , connections =
+        [ Double (Point 0 2) (Point 0 0)
+        , Single (Point -1 4) (Point 2 4)
+        ]
     }
 
 
@@ -131,6 +141,10 @@ viewGame model =
                     firstSelected == point || secondSelected == point
     in
     [ group
+        (model.connections
+            |> List.map viewConnection
+        )
+    , group
         (model.circles
             |> List.map
                 (\point ->
@@ -155,6 +169,49 @@ viewCircle selected =
         [ circle blue 0.5
         , circle color 0.4
         ]
+
+
+rectangleForPoints : Color -> Point -> Point -> Number -> Shape
+rectangleForPoints color a b width =
+    -- Rectangles for the connections have an interesting property:
+    -- they are either horizontal (the "y" of their points are the same) or vertical (the "x" are the same)
+    let
+        x =
+            -- Make sure we subtract the min to the max of the distance
+            max a.x b.x - min a.x b.x
+
+        y =
+            max a.y b.y - min a.y b.y
+    in
+    if x > y then
+        -- Horizontal
+        rectangle color x width
+            -- Move the center of the rectangle over the first point: --O--  O
+            |> move a.x a.y
+            -- Move the center so the rectangle is touching the circle: O----O
+            |> move ((b.x - a.x) / 2) 0
+
+    else
+        -- Vertical
+        rectangle color width y
+            |> move a.x a.y
+            |> move 0 ((b.y - a.y) / 2)
+
+
+viewConnection : Connection -> Shape
+viewConnection connection =
+    case connection of
+        Single a b ->
+            rectangleForPoints blue a b 0.1
+
+        Double a b ->
+            group
+                -- A larger blue rectangle
+                [ rectangleForPoints blue a b 0.25
+
+                -- With a thinner white rectangle in the middle to pretend it's a double rectangle
+                , rectangleForPoints white a b 0.05
+                ]
 
 
 
