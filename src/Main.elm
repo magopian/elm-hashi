@@ -127,10 +127,22 @@ view computer model =
 
 viewGame : Model -> List Shape
 viewGame model =
+    [ group
+        (model.connections
+            |> List.map viewConnection
+        )
+    , group
+        (model.circles
+            |> List.map (viewCircle model.selectedCircle)
+        )
+    ]
+
+
+viewCircle : Selection -> Point -> Shape
+viewCircle selection point =
     let
-        isCircleSelected : Point -> Bool
-        isCircleSelected point =
-            case model.selectedCircle of
+        selected =
+            case selection of
                 None ->
                     False
 
@@ -139,26 +151,8 @@ viewGame model =
 
                 Two firstSelected secondSelected ->
                     firstSelected == point || secondSelected == point
-    in
-    [ group
-        (model.connections
-            |> List.map viewConnection
-        )
-    , group
-        (model.circles
-            |> List.map
-                (\point ->
-                    viewCircle (isCircleSelected point)
-                        |> move point.x point.y
-                )
-        )
-    ]
 
-
-viewCircle : Bool -> Shape
-viewCircle selected =
-    let
-        color =
+        innerColor =
             if selected then
                 yellow
 
@@ -167,8 +161,9 @@ viewCircle selected =
     in
     group
         [ circle blue 0.5
-        , circle color 0.4
+        , circle innerColor 0.4
         ]
+        |> move point.x point.y
 
 
 rectangleForPoints : Color -> Point -> Point -> Number -> Shape
