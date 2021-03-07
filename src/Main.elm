@@ -57,6 +57,7 @@ type alias Model =
     { circles : List Point
     , selection : Selection
     , connections : List Connection
+    , fadeSelection : Maybe Number
     }
 
 
@@ -70,6 +71,7 @@ initialModel =
         ]
     , selection = None
     , connections = []
+    , fadeSelection = Nothing
     }
 
 
@@ -84,11 +86,6 @@ main =
 update : Computer -> Model -> Model
 update computer model =
     let
-        _ =
-            computer.mouse.x
-                |> screen_to_game computer.screen
-                |> Debug.log "mouse"
-
         mouseX =
             computer.mouse.x
                 |> screen_to_game computer.screen
@@ -99,48 +96,61 @@ update computer model =
 
         mousePoint =
             Point mouseX mouseY
+
+        updatedModel =
+            if computer.mouse.click then
+                if List.member mousePoint model.circles then
+                    case model.selection of
+                        None ->
+                            { model | selection = One mousePoint }
+
+                        One firstSelected ->
+                            if firstSelected == mousePoint then
+                                -- Deselect the first circle if it's clicked again
+                                { model | selection = None }
+
+                            else if can_connect firstSelected mousePoint then
+                                -- If the second circle can be connected, maybe add/double/delete a connection
+                                -- TODO: and fade the current selection
+                                { model
+                                    | selection = Two firstSelected mousePoint
+                                    , connections = manageConnections model.connections firstSelected mousePoint
+                                    , fadeSelection = Just 10
+                                }
+
+                            else
+                                -- ... or make the second circle the new first circle
+                                { model | selection = One mousePoint }
+
+                        Two firstSelected secondSelected ->
+                            if firstSelected == mousePoint then
+                                -- Deselect the first circle if it's clicked again and make the second one the first selected
+                                { model | selection = One secondSelected }
+
+                            else if secondSelected == mousePoint then
+                                -- Deselect the second circle if it's clicked again
+                                { model | selection = One firstSelected }
+
+                            else
+                                -- Start a new selection
+                                { model | selection = One mousePoint }
+
+                else
+                    { model | selection = None }
+
+            else
+                model
     in
-    if computer.mouse.click then
-        if List.member mousePoint model.circles then
-            case model.selection of
-                None ->
-                    { model | selection = One mousePoint }
+    case updatedModel.fadeSelection of
+        Just fadeSelection ->
+            if fadeSelection > 0 then
+                { updatedModel | fadeSelection = Just <| fadeSelection - 1 }
 
-                One firstSelected ->
-                    if firstSelected == mousePoint then
-                        -- Deselect the first circle if it's clicked again
-                        { model | selection = None }
+            else
+                { updatedModel | fadeSelection = Nothing, selection = None }
 
-                    else if can_connect firstSelected mousePoint then
-                        -- If the second circle can be connected, maybe add/double/delete a connection
-                        -- TODO: and fade the current selection
-                        { model
-                            | selection = Two firstSelected mousePoint
-                            , connections = manageConnections model.connections firstSelected mousePoint
-                        }
-
-                    else
-                        -- ... or make the second circle the new first circle
-                        { model | selection = One mousePoint }
-
-                Two firstSelected secondSelected ->
-                    if firstSelected == mousePoint then
-                        -- Deselect the first circle if it's clicked again and make the second one the first selected
-                        { model | selection = One secondSelected }
-
-                    else if secondSelected == mousePoint then
-                        -- Deselect the second circle if it's clicked again
-                        { model | selection = One firstSelected }
-
-                    else
-                        -- Start a new selection
-                        { model | selection = One mousePoint }
-
-        else
-            { model | selection = None }
-
-    else
-        model
+        Nothing ->
+            updatedModel
 
 
 
@@ -164,7 +174,7 @@ viewGame model =
         (model.circles
             |> List.map viewCircle
         )
-    , viewSelection model.selection
+    , viewSelection model.selection model.fadeSelection
     ]
 
 
@@ -220,8 +230,17 @@ viewConnection connection =
                 ]
 
 
-viewSelection : Selection -> Shape
-viewSelection selection =
+viewSelection : Selection -> Maybe Number -> Shape
+viewSelection selection fadeSelection =
+    let
+        fadeBy =
+            case fadeSelection of
+                Just f ->
+                    f / 10
+
+                Nothing ->
+                    1
+    in
     case selection of
         None ->
             -- Inexistent circle
@@ -230,6 +249,7 @@ viewSelection selection =
         One firstSelected ->
             circle yellow innerCircleSize
                 |> move firstSelected.x firstSelected.y
+                |> fade fadeBy
 
         Two firstSelected secondSelected ->
             group
@@ -238,6 +258,7 @@ viewSelection selection =
                 , circle yellow innerCircleSize
                     |> move secondSelected.x secondSelected.y
                 ]
+                |> fade fadeBy
 
 
 
