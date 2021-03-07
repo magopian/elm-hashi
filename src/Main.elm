@@ -27,7 +27,7 @@ type Connection
 
 type alias Model =
     { circles : List Point
-    , selectedCircle : Selection
+    , selection : Selection
     , connections : List Connection
     }
 
@@ -40,7 +40,7 @@ initialModel =
         , Point -1 4
         , Point 2 4
         ]
-    , selectedCircle = None
+    , selection = None
     , connections = []
     }
 
@@ -74,41 +74,42 @@ update computer model =
     in
     if computer.mouse.click then
         if List.member mousePoint model.circles then
-            case model.selectedCircle of
+            case model.selection of
                 None ->
-                    { model | selectedCircle = One mousePoint }
+                    { model | selection = One mousePoint }
 
                 One firstSelected ->
                     if firstSelected == mousePoint then
                         -- Deselect the first circle if it's clicked again
-                        { model | selectedCircle = None }
+                        { model | selection = None }
 
                     else if can_connect firstSelected mousePoint then
-                        -- If the second circle can be connected, add it to the selection ...
+                        -- If the second circle can be connected, maybe add/double/delete a connection
+                        -- TODO: and fade the current selection
                         { model
-                            | selectedCircle = Two firstSelected mousePoint
+                            | selection = Two firstSelected mousePoint
                             , connections = manageConnections model.connections firstSelected mousePoint
                         }
 
                     else
                         -- ... or make the second circle the new first circle
-                        { model | selectedCircle = One mousePoint }
+                        { model | selection = One mousePoint }
 
                 Two firstSelected secondSelected ->
                     if firstSelected == mousePoint then
                         -- Deselect the first circle if it's clicked again and make the second one the first selected
-                        { model | selectedCircle = One secondSelected }
+                        { model | selection = One secondSelected }
 
                     else if secondSelected == mousePoint then
                         -- Deselect the second circle if it's clicked again
-                        { model | selectedCircle = One firstSelected }
+                        { model | selection = One firstSelected }
 
                     else
                         -- Start a new selection
-                        { model | selectedCircle = One mousePoint }
+                        { model | selection = One mousePoint }
 
         else
-            { model | selectedCircle = None }
+            { model | selection = None }
 
     else
         model
@@ -133,35 +134,17 @@ viewGame model =
         )
     , group
         (model.circles
-            |> List.map (viewCircle model.selectedCircle)
+            |> List.map viewCircle
         )
+    , viewSelection model.selection
     ]
 
 
-viewCircle : Selection -> Point -> Shape
-viewCircle selection point =
-    let
-        selected =
-            case selection of
-                None ->
-                    False
-
-                One firstSelected ->
-                    firstSelected == point
-
-                Two firstSelected secondSelected ->
-                    firstSelected == point || secondSelected == point
-
-        innerColor =
-            if selected then
-                yellow
-
-            else
-                white
-    in
+viewCircle : Point -> Shape
+viewCircle point =
     group
         [ circle blue 0.5
-        , circle innerColor 0.4
+        , circle white 0.4
         ]
         |> move point.x point.y
 
@@ -206,6 +189,26 @@ viewConnection connection =
 
                 -- With a thinner white rectangle in the middle to pretend it's a double rectangle
                 , rectangleForPoints white a b 0.05
+                ]
+
+
+viewSelection : Selection -> Shape
+viewSelection selection =
+    case selection of
+        None ->
+            -- Inexistent circle
+            circle white 0
+
+        One firstSelected ->
+            circle yellow 0.4
+                |> move firstSelected.x firstSelected.y
+
+        Two firstSelected secondSelected ->
+            group
+                [ circle yellow 0.4
+                    |> move firstSelected.x firstSelected.y
+                , circle yellow 0.4
+                    |> move secondSelected.x secondSelected.y
                 ]
 
 
