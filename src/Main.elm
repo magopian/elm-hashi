@@ -39,6 +39,7 @@ doubleConnectionWidth =
 type alias Point =
     { x : Number
     , y : Number
+    , connections : Number
     }
 
 
@@ -64,10 +65,10 @@ type alias Model =
 initialModel : Model
 initialModel =
     { circles =
-        [ Point 0 0
-        , Point 0 2
-        , Point -1 4
-        , Point 2 4
+        [ Point 0 0 1
+        , Point 0 2 2
+        , Point -1 4 3
+        , Point 2 4 4
         ]
     , selection = None
     , connections = []
@@ -95,48 +96,51 @@ update computer model =
                 |> screen_to_game computer.screen
 
         mousePoint =
-            Point mouseX mouseY
+            model.circles
+                |> List.filter (\{ x, y } -> x == mouseX && y == mouseY)
+                |> List.head
 
         updatedModel =
             if computer.mouse.click then
-                if List.member mousePoint model.circles then
-                    case model.selection of
-                        None ->
-                            { model | selection = One mousePoint }
+                case mousePoint of
+                    Just point ->
+                        case model.selection of
+                            None ->
+                                { model | selection = One point }
 
-                        One firstSelected ->
-                            if firstSelected == mousePoint then
-                                -- Deselect the first circle if it's clicked again
-                                { model | selection = None }
+                            One firstSelected ->
+                                if firstSelected == point then
+                                    -- Deselect the first circle if it's clicked again
+                                    { model | selection = None }
 
-                            else if can_connect firstSelected mousePoint then
-                                -- If the second circle can be connected, maybe add/double/delete a connection
-                                -- TODO: and fade the current selection
-                                { model
-                                    | selection = Two firstSelected mousePoint
-                                    , connections = manageConnections model.connections firstSelected mousePoint
-                                    , fadeSelection = Just 10
-                                }
+                                else if can_connect firstSelected point then
+                                    -- If the second circle can be connected, maybe add/double/delete a connection
+                                    -- TODO: and fade the current selection
+                                    { model
+                                        | selection = Two firstSelected point
+                                        , connections = manageConnections model.connections firstSelected point
+                                        , fadeSelection = Just 10
+                                    }
 
-                            else
-                                -- ... or make the second circle the new first circle
-                                { model | selection = One mousePoint }
+                                else
+                                    -- ... or make the second circle the new first circle
+                                    { model | selection = One point }
 
-                        Two firstSelected secondSelected ->
-                            if firstSelected == mousePoint then
-                                -- Deselect the first circle if it's clicked again and make the second one the first selected
-                                { model | selection = One secondSelected }
+                            Two firstSelected secondSelected ->
+                                if firstSelected == point then
+                                    -- Deselect the first circle if it's clicked again and make the second one the first selected
+                                    { model | selection = One secondSelected }
 
-                            else if secondSelected == mousePoint then
-                                -- Deselect the second circle if it's clicked again
-                                { model | selection = One firstSelected }
+                                else if secondSelected == point then
+                                    -- Deselect the second circle if it's clicked again
+                                    { model | selection = One firstSelected }
 
-                            else
-                                -- Start a new selection
-                                { model | selection = One mousePoint }
+                                else
+                                    -- Start a new selection
+                                    { model | selection = One point }
 
-                else
-                    { model | selection = None }
+                    Nothing ->
+                        { model | selection = None }
 
             else
                 model
@@ -175,6 +179,10 @@ viewGame model =
             |> List.map viewCircle
         )
     , viewSelection model.selection model.fadeSelection
+    , group
+        (model.circles
+            |> List.map viewNumConnection
+        )
     ]
 
 
@@ -259,6 +267,13 @@ viewSelection selection fadeSelection =
                     |> move secondSelected.x secondSelected.y
                 ]
                 |> fade fadeBy
+
+
+viewNumConnection : Point -> Shape
+viewNumConnection point =
+    words black (String.fromFloat point.connections)
+        |> move point.x point.y
+        |> scale 0.05
 
 
 
