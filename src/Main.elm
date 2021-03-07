@@ -3,9 +3,37 @@ module Main exposing (main)
 import Playground exposing (..)
 
 
+
+---- CONSTANTS ----
+
+
 gameSize : Number
 gameSize =
     10
+
+
+circleSize : Number
+circleSize =
+    0.5
+
+
+innerCircleSize : Number
+innerCircleSize =
+    0.4
+
+
+connectionWidth : Number
+connectionWidth =
+    0.1
+
+
+doubleConnectionWidth : Number
+doubleConnectionWidth =
+    0.25
+
+
+
+---- TYPES ----
 
 
 type alias Point =
@@ -143,8 +171,8 @@ viewGame model =
 viewCircle : Point -> Shape
 viewCircle point =
     group
-        [ circle blue 0.5
-        , circle white 0.4
+        [ circle blue circleSize
+        , circle white innerCircleSize
         ]
         |> move point.x point.y
 
@@ -180,15 +208,15 @@ viewConnection : Connection -> Shape
 viewConnection connection =
     case connection of
         Single a b ->
-            rectangleForPoints blue a b 0.1
+            rectangleForPoints blue a b connectionWidth
 
         Double a b ->
             group
                 -- A larger blue rectangle
-                [ rectangleForPoints blue a b 0.25
+                [ rectangleForPoints blue a b doubleConnectionWidth
 
                 -- With a thinner white rectangle in the middle to pretend it's a double rectangle
-                , rectangleForPoints white a b 0.05
+                , rectangleForPoints white a b (doubleConnectionWidth - connectionWidth * 2)
                 ]
 
 
@@ -200,14 +228,14 @@ viewSelection selection =
             circle white 0
 
         One firstSelected ->
-            circle yellow 0.4
+            circle yellow innerCircleSize
                 |> move firstSelected.x firstSelected.y
 
         Two firstSelected secondSelected ->
             group
-                [ circle yellow 0.4
+                [ circle yellow innerCircleSize
                     |> move firstSelected.x firstSelected.y
-                , circle yellow 0.4
+                , circle yellow innerCircleSize
                     |> move secondSelected.x secondSelected.y
                 ]
 
