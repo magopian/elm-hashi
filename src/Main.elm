@@ -103,7 +103,7 @@ update computer model =
                                     -- Deselect the first circle if it's clicked again
                                     { model | selection = None }
 
-                                else if can_connect firstSelected point then
+                                else if canConnect firstSelected point then
                                     -- If the second circle can be connected, maybe add/double/delete a connection
                                     -- TODO: and fade the current selection
                                     { model
@@ -291,8 +291,8 @@ game_to_screen screen =
     screenSize / gameSize
 
 
-can_connect : Point -> Point -> Bool
-can_connect first second =
+canConnect : Point -> Point -> Bool
+canConnect first second =
     first.x == second.x || first.y == second.y
 
 
