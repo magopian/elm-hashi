@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Levels exposing (..)
 import Playground exposing (..)
 
 
@@ -36,13 +37,6 @@ doubleConnectionWidth =
 ---- TYPES ----
 
 
-type alias Point =
-    { x : Number
-    , y : Number
-    , connections : Number
-    }
-
-
 type Selection
     = None
     | One Point
@@ -65,11 +59,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { circles =
-        [ Point 0 0 1
-        , Point 0 2 2
-        , Point -1 4 3
-        , Point 2 4 4
-        ]
+        Levels.next 7 7
     , selection = None
     , connections = []
     , fadeSelection = Nothing
