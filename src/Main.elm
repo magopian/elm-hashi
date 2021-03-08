@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Levels exposing (..)
 import Playground exposing (..)
 
 
@@ -36,13 +37,6 @@ doubleConnectionWidth =
 ---- TYPES ----
 
 
-type alias Point =
-    { x : Number
-    , y : Number
-    , connections : Number
-    }
-
-
 type Selection
     = None
     | One Point
@@ -65,11 +59,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { circles =
-        [ Point 0 0 1
-        , Point 0 2 2
-        , Point -1 4 3
-        , Point 2 4 4
-        ]
+        Levels.next 7 7
     , selection = None
     , connections = []
     , fadeSelection = Nothing
@@ -113,7 +103,7 @@ update computer model =
                                     -- Deselect the first circle if it's clicked again
                                     { model | selection = None }
 
-                                else if can_connect firstSelected point then
+                                else if canConnect firstSelected point model.connections then
                                     -- If the second circle can be connected, maybe add/double/delete a connection
                                     -- TODO: and fade the current selection
                                     { model
@@ -301,9 +291,51 @@ game_to_screen screen =
     screenSize / gameSize
 
 
-can_connect : Point -> Point -> Bool
-can_connect first second =
-    first.x == second.x || first.y == second.y
+canConnect : Point -> Point -> List Connection -> Bool
+canConnect a b connections =
+    let
+        -- Always order the points in the connection the same way so we can compare the connections
+        ( first, second ) =
+            if a.x < b.x || a.y < b.y then
+                ( a, b )
+
+            else
+                ( b, a )
+
+        hasCrossing =
+            connections
+                |> List.map (isCrossing first second)
+                |> List.any identity
+    in
+    (isVertical first second || isHorizontal first second) && not hasCrossing
+
+
+isCrossing : Point -> Point -> Connection -> Bool
+isCrossing first second connection =
+    let
+        ( connFirst, connSecond ) =
+            case connection of
+                Single connA connB ->
+                    ( connA, connB )
+
+                Double connA connB ->
+                    ( connA, connB )
+    in
+    ((isHorizontal first second && isVertical connFirst connSecond)
+        && (first.x < connFirst.x && second.x > connFirst.x && first.y > connFirst.y && first.y < connSecond.y)
+    )
+        || (isVertical first second && isHorizontal connFirst connSecond)
+        && (first.x > connFirst.x && first.x < connSecond.x && first.y < connFirst.y && second.y > connFirst.y)
+
+
+isHorizontal : Point -> Point -> Bool
+isHorizontal p1 p2 =
+    p1.y == p2.y
+
+
+isVertical : Point -> Point -> Bool
+isVertical p1 p2 =
+    p1.x == p2.x
 
 
 manageConnections : List Connection -> Point -> Point -> List Connection
