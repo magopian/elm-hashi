@@ -1,5 +1,9 @@
 serve:
-	elm-live src/Main.elm -- --output=elm.js --optimize
+	elm-live src/Main.elm -- --output=elm.js
 
-deploy:
+build:
+	elm make src/Main.elm --output=elm.js --optimize
+.PHONY: build
+
+deploy: build
 	gh-pages -d .
