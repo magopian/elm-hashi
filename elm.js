@@ -5783,7 +5783,7 @@ var $evancz$elm_playground$Playground$Mouse = F4(
 var $evancz$elm_playground$Playground$Time = $elm$core$Basics$identity;
 var $elm$core$Set$Set_elm_builtin = $elm$core$Basics$identity;
 var $elm$core$Set$empty = $elm$core$Dict$empty;
-var $evancz$elm_playground$Playground$emptyKeyboard = {N: false, aK: false, P: false, f: $elm$core$Set$empty, q: false, A: false, W: false, X: false, M: false};
+var $evancz$elm_playground$Playground$emptyKeyboard = {N: false, aK: false, P: false, f: $elm$core$Set$empty, q: false, B: false, W: false, X: false, M: false};
 var $evancz$elm_playground$Playground$mouseClick = F2(
 	function (bool, mouse) {
 		return _Utils_update(
@@ -5807,7 +5807,7 @@ var $elm$core$Basics$negate = function (n) {
 };
 var $evancz$elm_playground$Playground$toScreen = F2(
 	function (width, height) {
-		return {O: (-height) / 2, ah: height, q: (-width) / 2, A: width / 2, _: height / 2, aC: width};
+		return {O: (-height) / 2, ah: height, q: (-width) / 2, B: width / 2, _: height / 2, aC: width};
 	});
 var $elm$core$Set$insert = F2(
 	function (key, _v0) {
@@ -6216,7 +6216,7 @@ var $evancz$elm_playground$Playground$updateKeyboard = F3(
 			case 'ArrowRight':
 				return _Utils_update(
 					keyboard,
-					{f: keys, A: isDown});
+					{f: keys, B: isDown});
 			default:
 				return _Utils_update(
 					keyboard,
@@ -6761,9 +6761,9 @@ var $author$project$Levels$next = F2(
 						points))));
 	});
 var $author$project$Main$initialModel = {
-	E: A2($author$project$Levels$next, 7, 7),
+	u: A2($author$project$Levels$next, 7, 7),
 	ac: _List_Nil,
-	u: $elm$core$Maybe$Nothing,
+	v: $elm$core$Maybe$Nothing,
 	h: $author$project$Main$None
 };
 var $author$project$Main$One = function (a) {
@@ -6802,37 +6802,50 @@ var $author$project$Main$isVertical = F2(
 	function (p1, p2) {
 		return _Utils_eq(p1.aD, p2.aD);
 	});
+var $author$project$Main$pointsFromConnection = function (connection) {
+	if (!connection.$) {
+		var first = connection.a;
+		var second = connection.b;
+		return _Utils_Tuple2(first, second);
+	} else {
+		var first = connection.a;
+		var second = connection.b;
+		return _Utils_Tuple2(first, second);
+	}
+};
 var $author$project$Main$isCrossing = F3(
 	function (first, second, connection) {
-		var _v0 = function () {
-			if (!connection.$) {
-				var connA = connection.a;
-				var connB = connection.b;
-				return _Utils_Tuple2(connA, connB);
-			} else {
-				var connA = connection.a;
-				var connB = connection.b;
-				return _Utils_Tuple2(connA, connB);
-			}
-		}();
+		var _v0 = $author$project$Main$pointsFromConnection(connection);
 		var connFirst = _v0.a;
 		var connSecond = _v0.b;
 		return ((A2($author$project$Main$isHorizontal, first, second) && A2($author$project$Main$isVertical, connFirst, connSecond)) && ((_Utils_cmp(first.aD, connFirst.aD) < 0) && ((_Utils_cmp(second.aD, connFirst.aD) > 0) && ((_Utils_cmp(first.aE, connFirst.aE) > 0) && (_Utils_cmp(first.aE, connSecond.aE) < 0))))) || ((A2($author$project$Main$isVertical, first, second) && A2($author$project$Main$isHorizontal, connFirst, connSecond)) && ((_Utils_cmp(first.aD, connFirst.aD) > 0) && ((_Utils_cmp(first.aD, connSecond.aD) < 0) && ((_Utils_cmp(first.aE, connFirst.aE) < 0) && (_Utils_cmp(second.aE, connFirst.aE) > 0)))));
 	});
+var $elm$core$Basics$neq = _Utils_notEqual;
+var $author$project$Main$isCrossingCircle = F3(
+	function (first, second, circle) {
+		return (!_Utils_eq(circle, first)) && ((!_Utils_eq(circle, second)) && ((A2($author$project$Main$isHorizontal, first, second) && (_Utils_eq(circle.aE, first.aE) && ((_Utils_cmp(circle.aD, first.aD) > 0) && (_Utils_cmp(circle.aD, second.aD) < 0)))) || (A2($author$project$Main$isVertical, first, second) && (_Utils_eq(circle.aD, first.aD) && ((_Utils_cmp(circle.aE, first.aE) > 0) && (_Utils_cmp(circle.aE, second.aE) < 0))))));
+	});
 var $elm$core$Basics$not = _Basics_not;
-var $author$project$Main$canConnect = F3(
-	function (a, b, connections) {
+var $author$project$Main$canConnect = F4(
+	function (a, b, circles, connections) {
 		var _v0 = ((_Utils_cmp(a.aD, b.aD) < 0) || (_Utils_cmp(a.aE, b.aE) < 0)) ? _Utils_Tuple2(a, b) : _Utils_Tuple2(b, a);
 		var first = _v0.a;
 		var second = _v0.b;
-		var hasCrossing = A2(
+		var crossesCircles = A2(
+			$elm$core$List$any,
+			$elm$core$Basics$identity,
+			A2(
+				$elm$core$List$map,
+				A2($author$project$Main$isCrossingCircle, first, second),
+				circles));
+		var crossesConnections = A2(
 			$elm$core$List$any,
 			$elm$core$Basics$identity,
 			A2(
 				$elm$core$List$map,
 				A2($author$project$Main$isCrossing, first, second),
 				connections));
-		return (A2($author$project$Main$isVertical, first, second) || A2($author$project$Main$isHorizontal, first, second)) && (!hasCrossing);
+		return (A2($author$project$Main$isVertical, first, second) || A2($author$project$Main$isHorizontal, first, second)) && ((!crossesCircles) && (!crossesConnections));
 	});
 var $elm$core$List$filter = F2(
 	function (isGood, list) {
@@ -6871,7 +6884,6 @@ var $elm$core$List$member = F2(
 			},
 			xs);
 	});
-var $elm$core$Basics$neq = _Utils_notEqual;
 var $author$project$Main$removeConnection = F2(
 	function (connections, connection) {
 		return A2(
@@ -6919,7 +6931,7 @@ var $author$project$Main$update = F2(
 					var y = _v3.aE;
 					return _Utils_eq(x, mouseX) && _Utils_eq(y, mouseY);
 				},
-				model.E));
+				model.u));
 		var updatedModel = function () {
 			if (computer.R.aJ) {
 				if (!mousePoint.$) {
@@ -6936,11 +6948,11 @@ var $author$project$Main$update = F2(
 							var firstSelected = _v2.a;
 							return _Utils_eq(firstSelected, point) ? _Utils_update(
 								model,
-								{h: $author$project$Main$None}) : (A3($author$project$Main$canConnect, firstSelected, point, model.ac) ? _Utils_update(
+								{h: $author$project$Main$None}) : (A4($author$project$Main$canConnect, firstSelected, point, model.u, model.ac) ? _Utils_update(
 								model,
 								{
 									ac: A3($author$project$Main$manageConnections, model.ac, firstSelected, point),
-									u: $elm$core$Maybe$Just(10),
+									v: $elm$core$Maybe$Just(10),
 									h: A2($author$project$Main$Two, firstSelected, point)
 								}) : _Utils_update(
 								model,
@@ -6973,16 +6985,16 @@ var $author$project$Main$update = F2(
 				return model;
 			}
 		}();
-		var _v0 = updatedModel.u;
+		var _v0 = updatedModel.v;
 		if (!_v0.$) {
 			var fadeSelection = _v0.a;
 			return (fadeSelection > 0) ? _Utils_update(
 				updatedModel,
 				{
-					u: $elm$core$Maybe$Just(fadeSelection - 1)
+					v: $elm$core$Maybe$Just(fadeSelection - 1)
 				}) : _Utils_update(
 				updatedModel,
-				{u: $elm$core$Maybe$Nothing, h: $author$project$Main$None});
+				{v: $elm$core$Maybe$Nothing, h: $author$project$Main$None});
 		} else {
 			return updatedModel;
 		}
@@ -7038,6 +7050,28 @@ var $evancz$elm_playground$Playground$circle = F2(
 			A2($evancz$elm_playground$Playground$Circle, color, radius));
 	});
 var $author$project$Main$circleSize = 0.5;
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $author$project$Main$connectionsFromPoint = F2(
+	function (connections, point) {
+		return $elm$core$List$sum(
+			A2(
+				$elm$core$List$map,
+				function (connection) {
+					if (!connection.$) {
+						var first = connection.a;
+						var second = connection.b;
+						return (_Utils_eq(first, point) || _Utils_eq(second, point)) ? 1 : 0;
+					} else {
+						var first = connection.a;
+						var second = connection.b;
+						return (_Utils_eq(first, point) || _Utils_eq(second, point)) ? 2 : 0;
+					}
+				},
+				connections));
+	});
+var $evancz$elm_playground$Playground$green = $evancz$elm_playground$Playground$Hex('#73d216');
 var $author$project$Main$innerCircleSize = 0.4;
 var $evancz$elm_playground$Playground$move = F3(
 	function (dx, dy, _v0) {
@@ -7049,19 +7083,23 @@ var $evancz$elm_playground$Playground$move = F3(
 		var f = _v0.f;
 		return A6($evancz$elm_playground$Playground$Shape, x + dx, y + dy, a, s, o, f);
 	});
+var $evancz$elm_playground$Playground$red = $evancz$elm_playground$Playground$Hex('#cc0000');
 var $evancz$elm_playground$Playground$white = $evancz$elm_playground$Playground$Hex('#FFFFFF');
-var $author$project$Main$viewCircle = function (point) {
-	return A3(
-		$evancz$elm_playground$Playground$move,
-		point.aD,
-		point.aE,
-		$evancz$elm_playground$Playground$group(
-			_List_fromArray(
-				[
-					A2($evancz$elm_playground$Playground$circle, $evancz$elm_playground$Playground$blue, $author$project$Main$circleSize),
-					A2($evancz$elm_playground$Playground$circle, $evancz$elm_playground$Playground$white, $author$project$Main$innerCircleSize)
-				])));
-};
+var $author$project$Main$viewCircle = F2(
+	function (connections, point) {
+		var numConnections = A2($author$project$Main$connectionsFromPoint, connections, point);
+		var color = (_Utils_cmp(numConnections, point.ac) > 0) ? $evancz$elm_playground$Playground$red : (_Utils_eq(numConnections, point.ac) ? $evancz$elm_playground$Playground$green : $evancz$elm_playground$Playground$blue);
+		return A3(
+			$evancz$elm_playground$Playground$move,
+			point.aD,
+			point.aE,
+			$evancz$elm_playground$Playground$group(
+				_List_fromArray(
+					[
+						A2($evancz$elm_playground$Playground$circle, color, $author$project$Main$circleSize),
+						A2($evancz$elm_playground$Playground$circle, $evancz$elm_playground$Playground$white, $author$project$Main$innerCircleSize)
+					])));
+	});
 var $author$project$Main$connectionWidth = 0.1;
 var $author$project$Main$doubleConnectionWidth = 0.25;
 var $evancz$elm_playground$Playground$Rectangle = F3(
@@ -7201,16 +7239,51 @@ var $author$project$Main$viewSelection = F2(
 							])));
 		}
 	});
+var $elm$core$List$all = F2(
+	function (isOkay, list) {
+		return !A2(
+			$elm$core$List$any,
+			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
+			list);
+	});
+var $author$project$Main$viewSuccess = F2(
+	function (connections, circles) {
+		var success = A2(
+			$elm$core$List$all,
+			$elm$core$Basics$identity,
+			A2(
+				$elm$core$List$map,
+				function (point) {
+					return _Utils_eq(
+						A2($author$project$Main$connectionsFromPoint, connections, point),
+						point.ac);
+				},
+				circles));
+		return success ? $evancz$elm_playground$Playground$group(
+			_List_fromArray(
+				[
+					A3($evancz$elm_playground$Playground$rectangle, $evancz$elm_playground$Playground$green, 7.5, 2.5),
+					A3($evancz$elm_playground$Playground$rectangle, $evancz$elm_playground$Playground$white, 7, 2),
+					A2(
+					$evancz$elm_playground$Playground$scale,
+					0.05,
+					A2($evancz$elm_playground$Playground$words, $evancz$elm_playground$Playground$green, 'SUCCESS!'))
+				])) : $evancz$elm_playground$Playground$group(_List_Nil);
+	});
 var $author$project$Main$viewGame = function (model) {
 	return _List_fromArray(
 		[
 			$evancz$elm_playground$Playground$group(
 			A2($elm$core$List$map, $author$project$Main$viewConnection, model.ac)),
 			$evancz$elm_playground$Playground$group(
-			A2($elm$core$List$map, $author$project$Main$viewCircle, model.E)),
-			A2($author$project$Main$viewSelection, model.h, model.u),
+			A2(
+				$elm$core$List$map,
+				$author$project$Main$viewCircle(model.ac),
+				model.u)),
+			A2($author$project$Main$viewSelection, model.h, model.v),
 			$evancz$elm_playground$Playground$group(
-			A2($elm$core$List$map, $author$project$Main$viewNumConnection, model.E))
+			A2($elm$core$List$map, $author$project$Main$viewNumConnection, model.u)),
+			A2($author$project$Main$viewSuccess, model.ac, model.u)
 		]);
 };
 var $author$project$Main$view = F2(

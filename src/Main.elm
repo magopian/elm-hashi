@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Html.Attributes exposing (width)
 import Levels exposing (..)
 import Playground exposing (..)
 
@@ -103,7 +104,7 @@ update computer model =
                                     -- Deselect the first circle if it's clicked again
                                     { model | selection = None }
 
-                                else if canConnect firstSelected point model.connections then
+                                else if canConnect firstSelected point model.circles model.connections then
                                     -- If the second circle can be connected, maybe add/double/delete a connection
                                     -- TODO: and fade the current selection
                                     { model
@@ -166,20 +167,35 @@ viewGame model =
         )
     , group
         (model.circles
-            |> List.map viewCircle
+            |> List.map (viewCircle model.connections)
         )
     , viewSelection model.selection model.fadeSelection
     , group
         (model.circles
             |> List.map viewNumConnection
         )
+    , viewSuccess model.connections model.circles
     ]
 
 
-viewCircle : Point -> Shape
-viewCircle point =
+viewCircle : List Connection -> Point -> Shape
+viewCircle connections point =
+    let
+        numConnections =
+            connectionsFromPoint connections point
+
+        color =
+            if numConnections > point.connections then
+                red
+
+            else if numConnections == point.connections then
+                green
+
+            else
+                blue
+    in
     group
-        [ circle blue circleSize
+        [ circle color circleSize
         , circle white innerCircleSize
         ]
         |> move point.x point.y
@@ -266,6 +282,26 @@ viewNumConnection point =
         |> scale 0.05
 
 
+viewSuccess : List Connection -> List Point -> Shape
+viewSuccess connections circles =
+    let
+        success =
+            circles
+                |> List.map (\point -> connectionsFromPoint connections point == point.connections)
+                |> List.all identity
+    in
+    if success then
+        group
+            [ rectangle green 7.5 2.5
+            , rectangle white 7 2
+            , words green "SUCCESS!"
+                |> scale 0.05
+            ]
+
+    else
+        group []
+
+
 
 ---- HELPERS ----
 
@@ -291,8 +327,8 @@ game_to_screen screen =
     screenSize / gameSize
 
 
-canConnect : Point -> Point -> List Connection -> Bool
-canConnect a b connections =
+canConnect : Point -> Point -> List Point -> List Connection -> Bool
+canConnect a b circles connections =
     let
         -- Always order the points in the connection the same way so we can compare the connections
         ( first, second ) =
@@ -302,30 +338,41 @@ canConnect a b connections =
             else
                 ( b, a )
 
-        hasCrossing =
+        crossesConnections =
             connections
                 |> List.map (isCrossing first second)
                 |> List.any identity
+
+        crossesCircles =
+            circles
+                |> List.map (isCrossingCircle first second)
+                |> List.any identity
     in
-    (isVertical first second || isHorizontal first second) && not hasCrossing
+    (isVertical first second || isHorizontal first second) && not crossesCircles && not crossesConnections
 
 
 isCrossing : Point -> Point -> Connection -> Bool
 isCrossing first second connection =
     let
         ( connFirst, connSecond ) =
-            case connection of
-                Single connA connB ->
-                    ( connA, connB )
-
-                Double connA connB ->
-                    ( connA, connB )
+            pointsFromConnection connection
     in
     ((isHorizontal first second && isVertical connFirst connSecond)
         && (first.x < connFirst.x && second.x > connFirst.x && first.y > connFirst.y && first.y < connSecond.y)
     )
         || (isVertical first second && isHorizontal connFirst connSecond)
         && (first.x > connFirst.x && first.x < connSecond.x && first.y < connFirst.y && second.y > connFirst.y)
+
+
+isCrossingCircle : Point -> Point -> Point -> Bool
+isCrossingCircle first second circle =
+    circle
+        /= first
+        && circle
+        /= second
+        && ((isHorizontal first second && circle.y == first.y && circle.x > first.x && circle.x < second.x)
+                || (isVertical first second && circle.x == first.x && circle.y > first.y && circle.y < second.y)
+           )
 
 
 isHorizontal : Point -> Point -> Bool
@@ -336,6 +383,40 @@ isHorizontal p1 p2 =
 isVertical : Point -> Point -> Bool
 isVertical p1 p2 =
     p1.x == p2.x
+
+
+pointsFromConnection : Connection -> ( Point, Point )
+pointsFromConnection connection =
+    case connection of
+        Single first second ->
+            ( first, second )
+
+        Double first second ->
+            ( first, second )
+
+
+connectionsFromPoint : List Connection -> Point -> Number
+connectionsFromPoint connections point =
+    connections
+        |> List.map
+            (\connection ->
+                case connection of
+                    Single first second ->
+                        if first == point || second == point then
+                            1
+
+                        else
+                            0
+
+                    Double first second ->
+                        if first == point || second == point then
+                            2
+
+                        else
+                            0
+            )
+        |> List.sum
+        |> toFloat
 
 
 manageConnections : List Connection -> Point -> Point -> List Connection
