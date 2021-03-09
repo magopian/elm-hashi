@@ -179,33 +179,14 @@ viewGame model =
 viewCircle : List Connection -> Point -> Shape
 viewCircle connections point =
     let
-        connectionsFromPoint =
-            connections
-                |> List.map
-                    (\connection ->
-                        case connection of
-                            Single first second ->
-                                if first == point || second == point then
-                                    1
-
-                                else
-                                    0
-
-                            Double first second ->
-                                if first == point || second == point then
-                                    2
-
-                                else
-                                    0
-                    )
-                |> List.sum
-                |> toFloat
+        numConnections =
+            connectionsFromPoint connections point
 
         color =
-            if connectionsFromPoint > point.connections then
+            if numConnections > point.connections then
                 red
 
-            else if connectionsFromPoint == point.connections then
+            else if numConnections == point.connections then
                 green
 
             else
@@ -390,6 +371,30 @@ pointsFromConnection connection =
 
         Double first second ->
             ( first, second )
+
+
+connectionsFromPoint : List Connection -> Point -> Number
+connectionsFromPoint connections point =
+    connections
+        |> List.map
+            (\connection ->
+                case connection of
+                    Single first second ->
+                        if first == point || second == point then
+                            1
+
+                        else
+                            0
+
+                    Double first second ->
+                        if first == point || second == point then
+                            2
+
+                        else
+                            0
+            )
+        |> List.sum
+        |> toFloat
 
 
 manageConnections : List Connection -> Point -> Point -> List Connection
