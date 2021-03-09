@@ -103,7 +103,7 @@ update computer model =
                                     -- Deselect the first circle if it's clicked again
                                     { model | selection = None }
 
-                                else if canConnect firstSelected point model.connections then
+                                else if canConnect firstSelected point model.circles model.connections then
                                     -- If the second circle can be connected, maybe add/double/delete a connection
                                     -- TODO: and fade the current selection
                                     { model
@@ -291,8 +291,8 @@ game_to_screen screen =
     screenSize / gameSize
 
 
-canConnect : Point -> Point -> List Connection -> Bool
-canConnect a b connections =
+canConnect : Point -> Point -> List Point -> List Connection -> Bool
+canConnect a b circles connections =
     let
         -- Always order the points in the connection the same way so we can compare the connections
         ( first, second ) =
@@ -306,8 +306,13 @@ canConnect a b connections =
             connections
                 |> List.map (isCrossing first second)
                 |> List.any identity
+
+        hasCircles =
+            circles
+                |> List.map (isCrossingCircle first second)
+                |> List.any identity
     in
-    (isVertical first second || isHorizontal first second) && not hasCrossing
+    (isVertical first second || isHorizontal first second) && not hasCircles && not hasCrossing
 
 
 isCrossing : Point -> Point -> Connection -> Bool
@@ -326,6 +331,17 @@ isCrossing first second connection =
     )
         || (isVertical first second && isHorizontal connFirst connSecond)
         && (first.x > connFirst.x && first.x < connSecond.x && first.y < connFirst.y && second.y > connFirst.y)
+
+
+isCrossingCircle : Point -> Point -> Point -> Bool
+isCrossingCircle first second circle =
+    circle
+        /= first
+        && circle
+        /= second
+        && ((isHorizontal first second && circle.y == first.y && circle.x > first.x && circle.x < second.x)
+                || (isVertical first second && circle.x == first.x && circle.y > first.y && circle.y < second.y)
+           )
 
 
 isHorizontal : Point -> Point -> Bool
