@@ -302,17 +302,17 @@ canConnect a b circles connections =
             else
                 ( b, a )
 
-        hasCrossing =
+        crossesConnections =
             connections
                 |> List.map (isCrossing first second)
                 |> List.any identity
 
-        hasCircles =
+        crossesCircles =
             circles
                 |> List.map (isCrossingCircle first second)
                 |> List.any identity
     in
-    (isVertical first second || isHorizontal first second) && not hasCircles && not hasCrossing
+    (isVertical first second || isHorizontal first second) && not crossesCircles && not crossesConnections
 
 
 isCrossing : Point -> Point -> Connection -> Bool
