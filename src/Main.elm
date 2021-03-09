@@ -1,5 +1,6 @@
 module Main exposing (main)
 
+import Html.Attributes exposing (width)
 import Levels exposing (..)
 import Playground exposing (..)
 
@@ -173,6 +174,7 @@ viewGame model =
         (model.circles
             |> List.map viewNumConnection
         )
+    , viewSuccess model.connections model.circles
     ]
 
 
@@ -278,6 +280,26 @@ viewNumConnection point =
     words black (String.fromFloat point.connections)
         |> move point.x point.y
         |> scale 0.05
+
+
+viewSuccess : List Connection -> List Point -> Shape
+viewSuccess connections circles =
+    let
+        success =
+            circles
+                |> List.map (\point -> connectionsFromPoint connections point == point.connections)
+                |> List.all identity
+    in
+    if success then
+        group
+            [ rectangle green 7.5 2.5
+            , rectangle white 7 2
+            , words green "SUCCESS!"
+                |> scale 0.05
+            ]
+
+    else
+        group []
 
 
 
