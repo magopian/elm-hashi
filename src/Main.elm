@@ -166,7 +166,7 @@ viewGame model =
         )
     , group
         (model.circles
-            |> List.map viewCircle
+            |> List.map (viewCircle model.connections)
         )
     , viewSelection model.selection model.fadeSelection
     , group
@@ -176,10 +176,43 @@ viewGame model =
     ]
 
 
-viewCircle : Point -> Shape
-viewCircle point =
+viewCircle : List Connection -> Point -> Shape
+viewCircle connections point =
+    let
+        connectionsFromPoint =
+            connections
+                |> List.map
+                    (\connection ->
+                        case connection of
+                            Single first second ->
+                                if first == point || second == point then
+                                    1
+
+                                else
+                                    0
+
+                            Double first second ->
+                                if first == point || second == point then
+                                    2
+
+                                else
+                                    0
+                    )
+                |> List.sum
+                |> toFloat
+
+        color =
+            if connectionsFromPoint > point.connections then
+                red
+
+            else if connectionsFromPoint == point.connections then
+                green
+
+            else
+                blue
+    in
     group
-        [ circle blue circleSize
+        [ circle color circleSize
         , circle white innerCircleSize
         ]
         |> move point.x point.y
@@ -319,12 +352,7 @@ isCrossing : Point -> Point -> Connection -> Bool
 isCrossing first second connection =
     let
         ( connFirst, connSecond ) =
-            case connection of
-                Single connA connB ->
-                    ( connA, connB )
-
-                Double connA connB ->
-                    ( connA, connB )
+            pointsFromConnection connection
     in
     ((isHorizontal first second && isVertical connFirst connSecond)
         && (first.x < connFirst.x && second.x > connFirst.x && first.y > connFirst.y && first.y < connSecond.y)
@@ -352,6 +380,16 @@ isHorizontal p1 p2 =
 isVertical : Point -> Point -> Bool
 isVertical p1 p2 =
     p1.x == p2.x
+
+
+pointsFromConnection : Connection -> ( Point, Point )
+pointsFromConnection connection =
+    case connection of
+        Single first second ->
+            ( first, second )
+
+        Double first second ->
+            ( first, second )
 
 
 manageConnections : List Connection -> Point -> Point -> List Connection
