@@ -182,7 +182,7 @@ viewCircle : List Connection -> Point -> Shape
 viewCircle connections point =
     let
         numConnections =
-            connectionsFromPoint connections point
+            numConnectionsFromPoint connections point
 
         color =
             if numConnections > point.connections then
@@ -285,12 +285,66 @@ viewNumConnection point =
 viewSuccess : List Connection -> List Point -> Shape
 viewSuccess connections circles =
     let
-        success =
+        circlesCompleted =
             circles
-                |> List.map (\point -> connectionsFromPoint connections point == point.connections)
+                |> List.map (\point -> numConnectionsFromPoint connections point == point.connections)
                 |> List.all identity
+
+        connectedPoints : Point -> List Point
+        connectedPoints start =
+            connectionsFromPoint connections start
+                |> List.concatMap
+                    (\connection ->
+                        let
+                            ( first, second ) =
+                                pointsFromConnection connection
+                        in
+                        [ first, second ]
+                    )
+
+        dedup : List Point -> List Point
+        dedup points =
+            points
+                |> List.foldl
+                    (\point acc ->
+                        if List.member point acc then
+                            acc
+
+                        else
+                            point :: acc
+                    )
+                    []
+
+        walkConnected : List Point -> List Point
+        walkConnected points =
+            let
+                updatedPoints =
+                    points
+                        |> List.concatMap connectedPoints
+                        |> dedup
+            in
+            if List.length updatedPoints /= List.length points then
+                -- Keep walking
+                walkConnected updatedPoints
+
+            else
+                -- Explored all the possible connections, stop walking
+                points
+
+        connectedTogether =
+            let
+                walked =
+                    case circles of
+                        first :: _ ->
+                            walkConnected [ first ]
+
+                        _ ->
+                            -- This should never happen, as it would mean we have no circles on the level
+                            []
+            in
+            List.length walked == List.length circles
     in
-    if success then
+    if circlesCompleted && connectedTogether then
         group
             [ rectangle green 7.5 2.5
             , rectangle white 7 2
@@ -395,25 +449,30 @@ pointsFromConnection connection =
             ( first, second )
 
 
-connectionsFromPoint : List Connection -> Point -> Number
+connectionsFromPoint : List Connection -> Point -> List Connection
 connectionsFromPoint connections point =
     connections
+        |> List.filter
+            (\connection ->
+                let
+                    ( first, second ) =
+                        pointsFromConnection connection
+                in
+                point == first || point == second
+            )
+
+
+numConnectionsFromPoint : List Connection -> Point -> Number
+numConnectionsFromPoint connections point =
+    connectionsFromPoint connections point
         |> List.map
             (\connection ->
                 case connection of
-                    Single first second ->
-                        if first == point || second == point then
-                            1
+                    Single _ _ ->
+                        1
 
-                        else
-                            0
-
-                    Double first second ->
-                        if first == point || second == point then
-                            2
-
-                        else
-                            0
+                    Double _ _ ->
+                        2
             )
         |> List.sum
         |> toFloat
