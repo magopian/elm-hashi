@@ -7050,27 +7050,6 @@ var $evancz$elm_playground$Playground$circle = F2(
 			A2($evancz$elm_playground$Playground$Circle, color, radius));
 	});
 var $author$project$Main$circleSize = 0.5;
-var $elm$core$List$sum = function (numbers) {
-	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
-};
-var $author$project$Main$connectionsFromPoint = F2(
-	function (connections, point) {
-		return $elm$core$List$sum(
-			A2(
-				$elm$core$List$map,
-				function (connection) {
-					if (!connection.$) {
-						var first = connection.a;
-						var second = connection.b;
-						return (_Utils_eq(first, point) || _Utils_eq(second, point)) ? 1 : 0;
-					} else {
-						var first = connection.a;
-						var second = connection.b;
-						return (_Utils_eq(first, point) || _Utils_eq(second, point)) ? 2 : 0;
-					}
-				},
-				connections));
-	});
 var $evancz$elm_playground$Playground$green = $evancz$elm_playground$Playground$Hex('#73d216');
 var $author$project$Main$innerCircleSize = 0.4;
 var $evancz$elm_playground$Playground$move = F3(
@@ -7083,11 +7062,40 @@ var $evancz$elm_playground$Playground$move = F3(
 		var f = _v0.f;
 		return A6($evancz$elm_playground$Playground$Shape, x + dx, y + dy, a, s, o, f);
 	});
+var $author$project$Main$connectionsFromPoint = F2(
+	function (connections, point) {
+		return A2(
+			$elm$core$List$filter,
+			function (connection) {
+				var _v0 = $author$project$Main$pointsFromConnection(connection);
+				var first = _v0.a;
+				var second = _v0.b;
+				return _Utils_eq(point, first) || _Utils_eq(point, second);
+			},
+			connections);
+	});
+var $elm$core$List$sum = function (numbers) {
+	return A3($elm$core$List$foldl, $elm$core$Basics$add, 0, numbers);
+};
+var $author$project$Main$numConnectionsFromPoint = F2(
+	function (connections, point) {
+		return $elm$core$List$sum(
+			A2(
+				$elm$core$List$map,
+				function (connection) {
+					if (!connection.$) {
+						return 1;
+					} else {
+						return 2;
+					}
+				},
+				A2($author$project$Main$connectionsFromPoint, connections, point)));
+	});
 var $evancz$elm_playground$Playground$red = $evancz$elm_playground$Playground$Hex('#cc0000');
 var $evancz$elm_playground$Playground$white = $evancz$elm_playground$Playground$Hex('#FFFFFF');
 var $author$project$Main$viewCircle = F2(
 	function (connections, point) {
-		var numConnections = A2($author$project$Main$connectionsFromPoint, connections, point);
+		var numConnections = A2($author$project$Main$numConnectionsFromPoint, connections, point);
 		var color = (_Utils_cmp(numConnections, point.ac) > 0) ? $evancz$elm_playground$Playground$red : (_Utils_eq(numConnections, point.ac) ? $evancz$elm_playground$Playground$green : $evancz$elm_playground$Playground$blue);
 		return A3(
 			$evancz$elm_playground$Playground$move,
@@ -7246,20 +7254,78 @@ var $elm$core$List$all = F2(
 			A2($elm$core$Basics$composeL, $elm$core$Basics$not, isOkay),
 			list);
 	});
+var $elm$core$List$concatMap = F2(
+	function (f, list) {
+		return $elm$core$List$concat(
+			A2($elm$core$List$map, f, list));
+	});
 var $author$project$Main$viewSuccess = F2(
 	function (connections, circles) {
-		var success = A2(
+		var dedup = function (points) {
+			return A3(
+				$elm$core$List$foldl,
+				F2(
+					function (point, acc) {
+						return A2($elm$core$List$member, point, acc) ? acc : A2($elm$core$List$cons, point, acc);
+					}),
+				_List_Nil,
+				points);
+		};
+		var connectedPoints = function (start) {
+			return A2(
+				$elm$core$List$concatMap,
+				function (connection) {
+					var _v1 = $author$project$Main$pointsFromConnection(connection);
+					var first = _v1.a;
+					var second = _v1.b;
+					return _List_fromArray(
+						[first, second]);
+				},
+				A2($author$project$Main$connectionsFromPoint, connections, start));
+		};
+		var walkConnected = function (points) {
+			walkConnected:
+			while (true) {
+				var updatedPoints = dedup(
+					A2($elm$core$List$concatMap, connectedPoints, points));
+				if (!_Utils_eq(
+					$elm$core$List$length(updatedPoints),
+					$elm$core$List$length(points))) {
+					var $temp$points = updatedPoints;
+					points = $temp$points;
+					continue walkConnected;
+				} else {
+					return points;
+				}
+			}
+		};
+		var connectedTogether = function () {
+			var walked = function () {
+				if (circles.b) {
+					var first = circles.a;
+					return walkConnected(
+						_List_fromArray(
+							[first]));
+				} else {
+					return _List_Nil;
+				}
+			}();
+			return _Utils_eq(
+				$elm$core$List$length(walked),
+				$elm$core$List$length(circles));
+		}();
+		var circlesCompleted = A2(
 			$elm$core$List$all,
 			$elm$core$Basics$identity,
 			A2(
 				$elm$core$List$map,
 				function (point) {
 					return _Utils_eq(
-						A2($author$project$Main$connectionsFromPoint, connections, point),
+						A2($author$project$Main$numConnectionsFromPoint, connections, point),
 						point.ac);
 				},
 				circles));
-		return success ? $evancz$elm_playground$Playground$group(
+		return (circlesCompleted && connectedTogether) ? $evancz$elm_playground$Playground$group(
 			_List_fromArray(
 				[
 					A3($evancz$elm_playground$Playground$rectangle, $evancz$elm_playground$Playground$green, 7.5, 2.5),
