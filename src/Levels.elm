@@ -276,10 +276,10 @@ cellToMaybePoint cells index cell =
                 indexToXY cells.width index
 
             connections =
-                numConnections (cellAboveOf cells index)
-                    + numConnections (cellRightOf cells index)
-                    + numConnections (cellBelowOf cells index)
-                    + numConnections (cellLeftOf cells index)
+                numConnections (cellAboveOf cells index) isVertical
+                    + numConnections (cellRightOf cells index) isHorizontal
+                    + numConnections (cellBelowOf cells index) isVertical
+                    + numConnections (cellLeftOf cells index) isHorizontal
         in
         Just <| Point x y connections
 
@@ -326,23 +326,27 @@ bridgesFromIsland cells point =
     right ++ below
 
 
-numConnections : Maybe Cell -> Int
-numConnections cell =
-    case cell of
-        Just Horizontal ->
-            1
+numConnections : Maybe Cell -> (Maybe Cell -> Bool) -> Int
+numConnections cell predicate =
+    if predicate cell then
+        case cell of
+            Just Horizontal ->
+                1
 
-        Just Vertical ->
-            1
+            Just Vertical ->
+                1
 
-        Just DoubleHorizontal ->
-            2
+            Just DoubleHorizontal ->
+                2
 
-        Just DoubleVertical ->
-            2
+            Just DoubleVertical ->
+                2
 
-        _ ->
-            0
+            _ ->
+                0
+
+    else
+        0
 
 
 toCenterBasedCoord : Cells -> Point -> Point
