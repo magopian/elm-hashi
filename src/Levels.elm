@@ -51,26 +51,27 @@ type alias Cells =
 next : Level
 next =
     let
+        -- level : List String
+        -- level =
+        --     [ "       " -- 6
+        --     , "       " -- 13
+        --     , "  O─O  " -- 20
+        --     , "  │ │  " -- 27
+        --     , "  O─O  " -- 34
+        --     , "       " -- 41
+        --     , "       " -- 48
+        --     ]
         level : List String
         level =
-            [ "       " -- 6
-            , "       " -- 13
-            , "  O─O  " -- 20
-            , "  │ │  " -- 27
-            , "  O─O  " -- 34
-            , "       " -- 41
-            , "       " -- 48
+            [ "O──O─O " -- 6
+            , "│ O│O─O" -- 13
+            , "│ │O║ │" -- 20
+            , "O─O─O═O" -- 27
+            , "│O║ │ │" -- 34
+            , "O│O═O │" -- 41
+            , " O═O──O" -- 48
             ]
 
-        -- level =
-        --     [ [ 2, 0, 0, 3, 0, 1, 0 ]
-        --     , [ 0, 0, 1, 0, 3, 0, 2 ]
-        --     , [ 0, 0, 0, 1, 0, 0, 0 ]
-        --     , [ 3, 0, 5, 0, 6, 0, 4 ]
-        --     , [ 0, 1, 0, 0, 0, 0, 0 ]
-        --     , [ 1, 0, 4, 0, 3, 0, 0 ]
-        --     , [ 0, 3, 0, 3, 0, 0, 2 ]
-        --     ]
         width =
             List.head level
                 |> Maybe.withDefault ""
@@ -92,14 +93,16 @@ next =
                 |> List.concat
                 |> Array.fromList
                 |> Cells width height
+                |> Debug.log "cells"
 
         islands : List Point
         islands =
             Array.indexedMap (cellToMaybePoint cells) cells.cells
                 |> Array.toList
                 |> List.filterMap identity
-                |> List.map (toCenterBasedCoord cells)
                 |> Debug.log "islands"
+                |> List.map (toCenterBasedCoord cells)
+                |> Debug.log "points"
 
         bridges : List Bridge
         bridges =
@@ -207,7 +210,7 @@ xyToIndex width x y =
 
 indexToXY : Int -> Int -> ( Int, Int )
 indexToXY width index =
-    ( index // width, remainderBy width index )
+    ( remainderBy width index, index // width )
 
 
 isHorizontal : Maybe Cell -> Bool
