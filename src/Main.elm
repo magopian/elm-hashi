@@ -44,11 +44,6 @@ type Selection
     | Two Point Point
 
 
-type Connection
-    = Single Point Point
-    | Double Point Point
-
-
 type alias Model =
     { circles : List Point
     , selection : Selection
@@ -60,7 +55,7 @@ type alias Model =
 initialModel : Model
 initialModel =
     { circles =
-        Levels.next 7 7
+        Levels.next.islands
     , selection = None
     , connections = []
     , fadeSelection = Nothing
@@ -86,9 +81,10 @@ update computer model =
             computer.mouse.y
                 |> screen_to_game computer.screen
 
+        mousePoint : Maybe Point
         mousePoint =
             model.circles
-                |> List.filter (\{ x, y } -> x == mouseX && y == mouseY)
+                |> List.filter (\{ x, y } -> toFloat x == mouseX && toFloat y == mouseY)
                 |> List.head
 
         updatedModel =
@@ -198,7 +194,7 @@ viewCircle connections point =
         [ circle color circleSize
         , circle white innerCircleSize
         ]
-        |> move point.x point.y
+        |> move (toFloat point.x) (toFloat point.y)
 
 
 rectangleForPoints : Color -> Point -> Point -> Number -> Shape
@@ -215,17 +211,17 @@ rectangleForPoints color a b width =
     in
     if x > y then
         -- Horizontal
-        rectangle color x width
+        rectangle color (toFloat x) width
             -- Move the center of the rectangle over the first point: --O--  O
-            |> move a.x a.y
+            |> move (toFloat a.x) (toFloat a.y)
             -- Move the center so the rectangle is touching the circle: O----O
-            |> move ((b.x - a.x) / 2) 0
+            |> move (toFloat (b.x - a.x) / 2) 0
 
     else
         -- Vertical
-        rectangle color width y
-            |> move a.x a.y
-            |> move 0 ((b.y - a.y) / 2)
+        rectangle color width (toFloat y)
+            |> move (toFloat a.x) (toFloat a.y)
+            |> move 0 (toFloat (b.y - a.y) / 2)
 
 
 viewConnection : Connection -> Shape
@@ -262,23 +258,23 @@ viewSelection selection fadeSelection =
 
         One firstSelected ->
             circle yellow innerCircleSize
-                |> move firstSelected.x firstSelected.y
+                |> move (toFloat firstSelected.x) (toFloat firstSelected.y)
                 |> fade fadeBy
 
         Two firstSelected secondSelected ->
             group
                 [ circle yellow innerCircleSize
-                    |> move firstSelected.x firstSelected.y
+                    |> move (toFloat firstSelected.x) (toFloat firstSelected.y)
                 , circle yellow innerCircleSize
-                    |> move secondSelected.x secondSelected.y
+                    |> move (toFloat secondSelected.x) (toFloat secondSelected.y)
                 ]
                 |> fade fadeBy
 
 
 viewNumConnection : Point -> Shape
 viewNumConnection point =
-    words black (String.fromFloat point.connections)
-        |> move point.x point.y
+    words black (String.fromInt point.connections)
+        |> move (toFloat point.x) (toFloat point.y)
         |> scale 0.05
 
 
@@ -462,7 +458,7 @@ connectionsFromPoint connections point =
             )
 
 
-numConnectionsFromPoint : List Connection -> Point -> Number
+numConnectionsFromPoint : List Connection -> Point -> Int
 numConnectionsFromPoint connections point =
     connectionsFromPoint connections point
         |> List.map
@@ -475,7 +471,6 @@ numConnectionsFromPoint connections point =
                         2
             )
         |> List.sum
-        |> toFloat
 
 
 manageConnections : List Connection -> Point -> Point -> List Connection
