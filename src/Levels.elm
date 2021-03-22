@@ -1,4 +1,4 @@
-module Levels exposing (Connection(..), Point, next)
+module Levels exposing (Bridge(..), Connection(..), Level, Point, next, parseLevel)
 
 import Array
 import Playground exposing (..)
@@ -37,7 +37,7 @@ type alias Level =
     { width : Int
     , height : Int
     , islands : List Point
-    , bridges : List Connection
+    , bridges : List Bridge
     }
 
 
@@ -48,30 +48,38 @@ type alias Cells =
     }
 
 
+basicLevel : List String
+basicLevel =
+    [ "       " -- 6
+    , "       " -- 13
+    , "  O─O  " -- 20
+    , "  │ │  " -- 27
+    , "  O─O  " -- 34
+    , "       " -- 41
+    , "       " -- 48
+    ]
+
+
+testLevel : List String
+testLevel =
+    [ "O──O─O " -- 6
+    , "│ O│O─O" -- 13
+    , "│ │O║ │" -- 20
+    , "O─O─O═O" -- 27
+    , "│O║ │ │" -- 34
+    , "O│O═O │" -- 41
+    , " O═O──O" -- 48
+    ]
+
+
 next : Level
 next =
-    let
-        -- level : List String
-        -- level =
-        --     [ "       " -- 6
-        --     , "       " -- 13
-        --     , "  O─O  " -- 20
-        --     , "  │ │  " -- 27
-        --     , "  O─O  " -- 34
-        --     , "       " -- 41
-        --     , "       " -- 48
-        --     ]
-        level : List String
-        level =
-            [ "O──O─O " -- 6
-            , "│ O│O─O" -- 13
-            , "│ │O║ │" -- 20
-            , "O─O─O═O" -- 27
-            , "│O║ │ │" -- 34
-            , "O│O═O │" -- 41
-            , " O═O──O" -- 48
-            ]
+    parseLevel testLevel
 
+
+parseLevel : List String -> Level
+parseLevel level =
+    let
         width =
             List.head level
                 |> Maybe.withDefault ""
@@ -93,21 +101,17 @@ next =
                 |> List.concat
                 |> Array.fromList
                 |> Cells width height
-                |> Debug.log "cells"
 
         islands : List Point
         islands =
             Array.indexedMap (cellToMaybePoint cells) cells.cells
                 |> Array.toList
                 |> List.filterMap identity
-                |> Debug.log "islands"
                 |> List.map (toCenterBasedCoord cells)
-                |> Debug.log "points"
 
         bridges : List Bridge
         bridges =
             List.concatMap (bridgesFromIsland cells) islands
-                |> Debug.log "bridges"
     in
     Level cells.width cells.height islands []
 

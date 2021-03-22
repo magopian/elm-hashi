@@ -1,3 +1,9 @@
+test:
+	elm-test "src/**/*Tests.elm"
+
+test-watch:
+	elm-test "src/**/*Tests.elm" --watch
+
 serve:
 	elm-live src/Main.elm -- --output=elm.js
 
